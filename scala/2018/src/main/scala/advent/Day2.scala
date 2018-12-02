@@ -38,15 +38,6 @@ object Day2 {
     }.head
   }
 
-  implicit class RichStream[A](val list: Stream[A]) extends AnyVal {
-    def debug: Stream[A] = {
-      list.map { a =>
-        println(a)
-        a
-      }
-    }
-  }
-
   def main(args: Array[String]): Unit = {
     val input = io.Source.fromURL(this.getClass.getClassLoader.getResource("day2.txt"))
       .getLines
