@@ -60,7 +60,7 @@ object Day4 {
     println(s"Result 2: $guardMinute")
   }
 
-  implicit class RichMap[K, V](val m: Map[K, Vector[V]]) {
+  implicit class RichMap[K, V](val m: Map[K, Seq[V]]) {
     def mostCommon: K =
       m.mapValues(_.length).toList.sortBy(_._2).reverse.head._1
   }
