@@ -34,19 +34,14 @@ object Day4 {
   }
 
   def sleepingGuard(log: Map[GuardId, Vector[Int]]): Int = 
-    log.mapValues(_.length).toList.sortBy(_._2).reverse.head._1
+    log.mostCommon
   def sleepingMinute(log: Vector[Int]): Int =
-    log.groupBy(identity).toList.sortBy(_._2.length).reverse.head._1
+    log.groupBy(identity).mostCommon
 
   def findGuardAndMinute(log: Map[GuardId, Vector[Int]]): Int = {
     val (guard, minute) = log.toList.flatMap { case (id, minutes) =>
       minutes.map(id -> _)
-    }.groupBy(identity)
-      .mapValues(_.length)
-      .toList
-      .sortBy(_._2)
-      .reverse
-      .head._1
+    }.groupBy(identity).mostCommon
 
     guard * minute
   }
@@ -63,6 +58,11 @@ object Day4 {
 
     println(s"Result 1: ${guard * minute}")
     println(s"Result 2: $guardMinute")
+  }
+
+  implicit class RichMap[K, V](val m: Map[K, Vector[V]]) {
+    def mostCommon: K =
+      m.mapValues(_.length).toList.sortBy(_._2).reverse.head._1
   }
 
 }
