@@ -30,13 +30,19 @@ class Day8Test extends FlatSpec with Matchers with PropertyChecks with Inside {
         ), List(2))
       ), List(1, 1, 2))
 
-    Day8.parse(testdata) should equal(expected)
+    Day8.parse(testdata).unsafeRunSync should equal(expected)
   }
 
   it should "have a root value of 66" in {
     val testdata = "2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2"
 
-    Day8.parse(testdata).value should equal(66)
+    val test = for {
+      result <- Day8.parse(testdata)
+    } yield {
+      result.value should equal(66)
+    }
+
+    test.unsafeRunSync
   }
 
 }
