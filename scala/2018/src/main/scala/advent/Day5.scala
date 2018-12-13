@@ -1,6 +1,7 @@
 package advent
 
 import cats.effect.IO
+import advent.Zipper._
 
 object Day5 extends AdventOfCode("day5.txt") {
   type Polymer = Vector[Char]
@@ -48,12 +49,55 @@ object Day5 extends AdventOfCode("day5.txt") {
       .head
   }
 
+  def eliminateZipper(polymer: Polymer): Polymer = {
+    def loop(current: Zipper[Char]): Polymer = {
+      if (current.tail.isEmpty) current.toVector
+      else {
+        if (isDifferentPolarity(current.head, current.tail.head)) {
+          val removed = current.remove.remove
+          if (removed.before.isEmpty) loop(removed) else loop(removed.prev)
+        } else {
+          loop(current.next)
+        }
+      }
+    }
+
+    loop(polymer.toList.toZipper)
+  }
+
+  def removedZipper(polymer: Polymer): Polymer =
+    polymer.map(_.toLower)
+      .distinct
+      .map { id => eliminateZipper(polymer.filter(_.toLower != id)) }
+      .sortBy(_.size)
+      .head
+
+  def time[A](operation: String)(f: => A): A = {
+    val start = System.currentTimeMillis()
+    val result = f
+    val end = System.currentTimeMillis()
+    println(s"$operation took ${end - start} milliseconds")
+    result
+  }
+
   override def mainIO(input: List[String]): IO[Unit] = {
     IO {
       val polymer = input.head.toVector
-      println(s"Original length: ${polymer.size}")
-      println(s"Polymer length: ${eliminate(polymer).size}")
-      println(s"Shortest elimination: ${removed(polymer).size}")
+      time("Original length") {
+        println(s"Original length: ${polymer.size}")
+      }
+      time("Polymer length") {
+        println(s"Polymer length (using Set): ${eliminate(polymer).size}")
+      }
+      time("Shortest elimination") {
+        println(s"Shortest elimination (using Set): ${removed(polymer).size}")
+      }
+      time("Polymer length (zipper)") {
+        println(s"Polymer length (using Zipper): ${eliminateZipper(polymer).size}")
+      }
+      time("Shortest elimination (zipper)") {
+        println(s"Shortest elimination (using Zipper): ${removedZipper(polymer).size}")
+      }
     }
   }
 }
