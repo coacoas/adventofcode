@@ -1,6 +1,7 @@
 package advent
 
 import cats.effect.IO
+import cats.implicits._
 import advent.Zipper._
 
 object Day5 extends AdventOfCode("day5.txt") {
@@ -41,15 +42,11 @@ object Day5 extends AdventOfCode("day5.txt") {
     loop(0, 1, Set.empty)
   }
 
-  def removed(polymer: Polymer): Polymer = {
-    polymer.map(_.toLower)
-      .distinct
-      .map { id => eliminate(polymer.filter(_.toLower != id)) }
-      .sortBy(_.size)
-      .head
-  }
-
   def eliminateZipper(polymer: Polymer): Polymer = {
+    /** This is my second implementation, using a Zipper data type to
+      * simulate mutation (although this is still entirey pure). It
+      * seems to me that this is clearer, as well as much more performant.
+      */
     def loop(current: Zipper[Char]): Polymer = {
       if (current.tail.isEmpty) current.toVector
       else {
@@ -65,39 +62,29 @@ object Day5 extends AdventOfCode("day5.txt") {
     loop(polymer.toList.toZipper)
   }
 
-  def removedZipper(polymer: Polymer): Polymer =
+  def removed(polymer: Polymer, elimination: Polymer => Polymer): Polymer = {
     polymer.map(_.toLower)
       .distinct
-      .map { id => eliminateZipper(polymer.filter(_.toLower != id)) }
+      .map { id => elimination(polymer.filter(_.toLower != id)) }
       .sortBy(_.size)
       .head
-
-  def time[A](operation: String)(f: => A): A = {
-    val start = System.currentTimeMillis()
-    val result = f
-    val end = System.currentTimeMillis()
-    println(s"$operation took ${end - start} milliseconds")
-    result
   }
 
-  override def mainIO(input: List[String]): IO[Unit] = {
-    IO {
-      val polymer = input.head.toVector
-      time("Original length") {
-        println(s"Original length: ${polymer.size}")
-      }
-      time("Polymer length") {
-        println(s"Polymer length (using Set): ${eliminate(polymer).size}")
-      }
-      time("Shortest elimination") {
-        println(s"Shortest elimination (using Set): ${removed(polymer).size}")
-      }
-      time("Polymer length (zipper)") {
-        println(s"Polymer length (using Zipper): ${eliminateZipper(polymer).size}")
-      }
-      time("Shortest elimination (zipper)") {
-        println(s"Shortest elimination (using Zipper): ${removedZipper(polymer).size}")
-      }
-    }
-  }
+  override def mainIO(input: List[String]): IO[Unit] = for {
+    polymer <- IO.pure(input.head.toVector)
+    _ <- time("Original length")(polymer.size)
+    _ <- time("Polymer length")(eliminate(polymer).size)
+    _ <- time("Shortest elimination")(removed(polymer, eliminate(_)).size)
+    _ <- time("Polymer length (zipper)")(eliminateZipper(polymer).size)
+    _ <- time("Shortest elimination (zipper)")(removed(polymer, eliminateZipper(_)).size)
+  } yield ()
+
+  def time[A](operation: String)(f: => A): IO[A] = for {
+    start <- IO(System.currentTimeMillis())
+    result = f
+    end <- IO(System.currentTimeMillis())
+    _ <- IO(println(s"$operation took ${end - start} milliseconds"))
+    _ <- IO(println(s"$operation: $result"))
+  } yield result
+
 }
