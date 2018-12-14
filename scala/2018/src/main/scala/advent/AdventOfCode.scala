@@ -37,4 +37,13 @@ abstract class AdventOfCode(val filename: String) {
 
     exec.unsafeRunSync()
   }
+
+  def time[A](operation: String)(f: => A): IO[A] = for {
+    start <- IO(System.currentTimeMillis())
+    result = f
+    end <- IO(System.currentTimeMillis())
+    _ <- IO(println(s"$operation took ${end - start} milliseconds"))
+    _ <- IO(println(s"$operation: $result"))
+  } yield result
+
 }
